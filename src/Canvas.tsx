@@ -15,7 +15,8 @@ type arrow = {
 
 const Canvas = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
+  const intervalIdRef = useRef<NodeJS.Timer | null>(null);
+  // const intervalIdRef = useRef<number | null>(null);
   const [canvas, setCnavas] = useState<HTMLCanvasElement | null>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
   const [arrow, setArrow] = useState<arrow>({
@@ -23,6 +24,22 @@ const Canvas = () => {
     y: 0,
   });
 
+  const onKeyDown = (e: KeyboardEvent) => {
+    const { code }: { code: string } = e;
+    console.log(code);
+    if (code === "ArrowDown") {
+      if (intervalIdRef.current) clearInterval(intervalIdRef.current);
+      setArrow((prev) => {
+        return { ...prev, y: prev.y + margin_top * 2 };
+      });
+    } else if (code === "ArrowUp") {
+      if (intervalIdRef.current) clearInterval(intervalIdRef.current);
+      setArrow((prev) => {
+        return { ...prev, y: prev.y - margin_top * 2 };
+      });
+    }
+    // 이후 로직
+  };
   const Draw_arrow = () => {
     if (ctx) {
       ctx.beginPath();
@@ -31,28 +48,28 @@ const Canvas = () => {
       ctx.lineTo(arrow.x, arrow.y + arrow_height);
       ctx.lineTo(arrow.x + arrow_width, arrow.y + arrow_height / 2);
       ctx.fill();
+
+      ctx.save();
       setTimeout(() => {
-        ctx.save();
-        ctx.clearRect(
-          arrow.x,
-          arrow.y,
-          arrow.x + arrow_width,
-          arrow.y + arrow_height
-        );
-        setTimeout(() => {
-          ctx.restore();
-          requestAnimationFrame(Draw_arrow);
-        }, 500);
+        ctx.clearRect(arrow.x, arrow.y, arrow_width, arrow_height);
+        ctx.restore();
       }, 500);
     }
   };
 
   useEffect(() => {
-    // console.log(canvas);
-    // Arrow(1, 2);
-    Draw_arrow();
-    // requestAnimationFrame(Draw_arrow);
-  }, [arrow]);
+    if (ctx) {
+      if (intervalIdRef.current) window.clearInterval(intervalIdRef.current);
+      intervalIdRef.current = setInterval(() => {
+        Draw_arrow();
+      }, 1000);
+      return () => {
+        if (intervalIdRef.current) {
+          window.clearInterval(intervalIdRef.current);
+        }
+      };
+    }
+  }, [arrow, ctx]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -88,6 +105,12 @@ const Canvas = () => {
     // ctx.fill();
 
     // ctx.arc(50, 50, 10, Math.PI * 2, true);
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.addEventListener("keydown", onKeyDown);
+    };
   }, []);
   return <canvas ref={canvasRef}></canvas>;
 };
