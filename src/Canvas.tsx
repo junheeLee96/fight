@@ -8,12 +8,18 @@ const margin_top: number = 50;
 const arrow_width: number = 50;
 const arrow_height: number = 50;
 
+let cursor = "start";
+
+type CanvasPropsType = {
+  isStartToggle: () => void;
+};
+
 type arrow = {
   x: number;
   y: number;
 };
 
-const Canvas = () => {
+const Canvas = ({ isStartToggle }: CanvasPropsType) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const intervalIdRef = useRef<NodeJS.Timer | null>(null);
   // const intervalIdRef = useRef<number | null>(null);
@@ -28,17 +34,24 @@ const Canvas = () => {
     const { code }: { code: string } = e;
     console.log(code);
     if (code === "ArrowDown") {
-      if (intervalIdRef.current) clearInterval(intervalIdRef.current);
-      setArrow((prev) => {
-        return { ...prev, y: prev.y + margin_top * 2 };
-      });
+      if (cursor !== "about") {
+        if (intervalIdRef.current) clearInterval(intervalIdRef.current);
+        cursor = "about";
+        setArrow((prev) => {
+          return { ...prev, y: prev.y + margin_top * 2 };
+        });
+      }
     } else if (code === "ArrowUp") {
-      if (intervalIdRef.current) clearInterval(intervalIdRef.current);
-      setArrow((prev) => {
-        return { ...prev, y: prev.y - margin_top * 2 };
-      });
+      if (cursor !== "start") {
+        if (intervalIdRef.current) clearInterval(intervalIdRef.current);
+        cursor = "start";
+        setArrow((prev) => {
+          return { ...prev, y: prev.y - margin_top * 2 };
+        });
+      }
+    } else if (code === "Enter") {
+      isStartToggle();
     }
-    // 이후 로직
   };
   const Draw_arrow = () => {
     if (ctx) {
@@ -109,7 +122,7 @@ const Canvas = () => {
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      window.addEventListener("keydown", onKeyDown);
+      window.removeEventListener("keydown", onKeyDown);
     };
   }, []);
   return <canvas ref={canvasRef}></canvas>;
